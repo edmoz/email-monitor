@@ -5,6 +5,9 @@ import os
 import sys
 import urllib2
 
+import smtplib
+from email.mime.text import MIMEText
+
 if "SL_USERNAME" not in os.environ or \
         "SL_PASSWORD" not in os.environ or \
         "SL_SERVERID" not in os.environ:
@@ -12,6 +15,7 @@ if "SL_USERNAME" not in os.environ or \
     sys.exit(1)
 
 SL_API_URL = "https://api.socketlabs.com/v1"
+SL_SMTP = "smtp.socketlabs.com"
 SL_USERNAME = os.environ['SL_USERNAME']
 SL_PASSWORD = os.environ['SL_PASSWORD']
 SL_SERVERID = os.environ['SL_SERVERID']
@@ -38,6 +42,19 @@ def getData(method, params):
     result = urllib2.urlopen(request)
     return json.loads(result.read())
 
+def send_email():
+    me = 'edwong@mozilla.com'
+    you = 'suckafree@gmail.com'
+    msg = MIMEText("test 123")
+    msg['Subject'] = 'test sub'
+    msg['From'] = me
+    msg['To'] = you
+    s = smtplib.SMTP(SL_SMTP, 25)
+    s.ehlo()
+    s.login(SL_USERNAME, SL_PASSWORD)
+    s.sendmail(me, [you], msg.as_string())
+    s.quit()
+
 queued = getData("messagesQueued", qs)
 sent = getData("messagesProcessed", qs)
 failed = getData("messagesFailed", qs)
@@ -58,4 +75,5 @@ print 'Fail Percentage: %s%%' % fail_percent
 if pending > PENDING_LIMIT or fail_percent > FAIL_PERCENT_LIMIT:
     print 'Exceeded queue limit sending email alert'
     # TODO: send email
+    # send_email()
 
