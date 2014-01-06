@@ -15,7 +15,7 @@ if "SL_USERNAME" not in os.environ or \
     sys.exit(1)
 
 SL_API_URL = "https://api.socketlabs.com/v1"
-SL_SMTP = "smtp.socketlabs.com"
+SL_PORT = 25
 SL_USERNAME = os.environ['SL_USERNAME']
 SL_PASSWORD = os.environ['SL_PASSWORD']
 SL_SERVERID = os.environ['SL_SERVERID']
@@ -23,13 +23,25 @@ SAMPLE_TIME = 5
 PENDING_LIMIT = 20
 FAIL_PERCENT_LIMIT = 20
 
+SL_SMTP = "smtp.socketlabs.com"
+FROM_ADDR = "no-reply@persona.org"
+TO_ADDR = ["edog@mailinator.com", "ewong@mozilla.com"]
+SUBJECT = "[socketlabs-mq] Auto Alert"
+
+try:
+    SL_SMTP_USERNAME = os.environ['SL_SMTP_USERNAME']
+    SL_SMTP_PASSWORD = os.environ['SL_SMTP_PASSWORD']
+    smtp_enabled = True
+except:
+    smtp_enabled = False
+    print 'send email alert not enabled'
 
 now = str(datetime.datetime.utcnow() - datetime.timedelta(minutes=SAMPLE_TIME))
-q_range = now[:now.index(".")].replace(' ', '%20')
+now_sample = now[:now.index(".")].replace(' ', '%20')
 
 method = "messagesQueued"
 qs = "serverId=%s&getTotals=true&" % SL_SERVERID
-qs += "startDate=%s&" % q_range
+qs += "startDate=%s&" % now_sample
 qs += "count=0"
 
 def getData(method, params):
@@ -42,17 +54,17 @@ def getData(method, params):
     result = urllib2.urlopen(request)
     return json.loads(result.read())
 
-def send_email():
-    me = 'edwong@mozilla.com'
-    you = 'suckafree@gmail.com'
-    msg = MIMEText("test 123")
-    msg['Subject'] = 'test sub'
-    msg['From'] = me
-    msg['To'] = you
-    s = smtplib.SMTP(SL_SMTP, 25)
+def send_email(msg_body, from_addr, to_addr, subject):
+    msg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n"
+           % (from_addr, ", ".join(to_addr), subject) )
+    msg += "%s\r\n" % msg_body
+
+    s = smtplib.SMTP(SL_SMTP, SL_PORT)
     s.ehlo()
-    s.login(SL_USERNAME, SL_PASSWORD)
-    s.sendmail(me, [you], msg.as_string())
+    s.set_debuglevel(1)
+    s.ehlo()
+    s.login(SL_SMTP_USERNAME, SL_SMTP_PASSWORD)
+    s.sendmail(from_addr, to_addr, msg)
     s.quit()
 
 queued = getData("messagesQueued", qs)
@@ -62,18 +74,21 @@ failed = getData("messagesFailed", qs)
 queue_ct = int(queued['totalCount'])
 sent_ct = int(sent['totalCount'])
 fail_ct = int(failed['totalCount'])
-print 
-print 'Counts: queue=%s, sent=%s, fail=%s' % (queue_ct, sent_ct, fail_ct)
+
+msg_body = "Socketlabs email status as of %s: \n" % now_sample
+msg_body +=  'Counts: queue=%s, sent=%s, fail=%s\n' % (queue_ct, sent_ct, fail_ct)
 
 totalOut = sent_ct + fail_ct
 pending = queue_ct - totalOut
 fail_percent = (float(fail_ct)/sent_ct) * 100
-print 'Pending: ',  pending
-print 'Fail Percentage: %s%%' % fail_percent
+msg_body += 'Pending: %s\n' %  pending
+msg_body += 'Fail Percentage: %s%%\n' % fail_percent
 
+print 
+print msg_body
 
-if pending > PENDING_LIMIT or fail_percent > FAIL_PERCENT_LIMIT:
+if sent_ct > 10 and pending > PENDING_LIMIT or fail_percent > FAIL_PERCENT_LIMIT:
     print 'Exceeded queue limit sending email alert'
-    # TODO: send email
-    # send_email()
+    if smtp_enabled:
+        send_email(msg_body, FROM_ADDR, TO_ADDR, SUBJECT)
 
