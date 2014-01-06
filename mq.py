@@ -4,9 +4,7 @@ import json
 import os
 import sys
 import urllib2
-
 import smtplib
-from email.mime.text import MIMEText
 
 if "SL_USERNAME" not in os.environ or \
         "SL_PASSWORD" not in os.environ or \
@@ -19,13 +17,14 @@ SL_PORT = 25
 SL_USERNAME = os.environ['SL_USERNAME']
 SL_PASSWORD = os.environ['SL_PASSWORD']
 SL_SERVERID = os.environ['SL_SERVERID']
-SAMPLE_TIME = 5
+SAMPLE_TIME = 2
 PENDING_LIMIT = 20
-FAIL_PERCENT_LIMIT = 20
+FAIL_PERCENT_LIMIT = 30
+ALERT_MIN = 10
 
 SL_SMTP = "smtp.socketlabs.com"
 FROM_ADDR = "no-reply@persona.org"
-TO_ADDR = ["edog@mailinator.com", "ewong@mozilla.com"]
+TO_ADDR = ["ewong@mozilla.com"]
 SUBJECT = "[socketlabs-mq] Auto Alert"
 
 try:
@@ -75,11 +74,13 @@ queue_ct = int(queued['totalCount'])
 sent_ct = int(sent['totalCount'])
 fail_ct = int(failed['totalCount'])
 
-msg_body = "Socketlabs email status as of %s: \n" % now_sample
+msg_body = "Socketlabs email status as of %s: \n" % now
 msg_body +=  'Counts: queue=%s, sent=%s, fail=%s\n' % (queue_ct, sent_ct, fail_ct)
 
 totalOut = sent_ct + fail_ct
 pending = queue_ct - totalOut
+if sent_ct == 0:
+    sent_ct = 1
 fail_percent = (float(fail_ct)/sent_ct) * 100
 msg_body += 'Pending: %s\n' %  pending
 msg_body += 'Fail Percentage: %s%%\n' % fail_percent
@@ -87,7 +88,7 @@ msg_body += 'Fail Percentage: %s%%\n' % fail_percent
 print 
 print msg_body
 
-if sent_ct > 10 and pending > PENDING_LIMIT or fail_percent > FAIL_PERCENT_LIMIT:
+if fail_ct > ALERT_MIN and pending > PENDING_LIMIT or fail_percent > FAIL_PERCENT_LIMIT:
     print 'Exceeded queue limit sending email alert'
     if smtp_enabled:
         send_email(msg_body, FROM_ADDR, TO_ADDR, SUBJECT)
