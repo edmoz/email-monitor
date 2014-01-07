@@ -18,7 +18,7 @@ except:
     smtp_enabled = False
     print 'send email alert not enabled'
 
-epoch_time = int((datetime.datetime.utcnow() -
+epoch_time = int((datetime.datetime.utcnow() - \
                   datetime.datetime(1970,1,1)).total_seconds())
 SL_SMTP = "smtp.socketlabs.com"
 FROM_ADDR = "no-reply@persona.org"
