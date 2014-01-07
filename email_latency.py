@@ -19,6 +19,7 @@ except:
     smtp_enabled = False
     print 'send email alert not enabled'
 
+print 'UTCNOW:', datetime.datetime.utcnow()
 epoch_time = int(time.mktime(datetime.datetime.utcnow().timetuple()))
 
 SL_SMTP = "smtp.socketlabs.com"
