@@ -2,23 +2,24 @@ import datetime
 import json
 import os
 import sys
-import time
 import urllib2
 import smtplib
 
 SL_API_URL = "https://api.socketlabs.com/v1"
 SL_PORT = 25
-epoch_time = int((datetime.datetime.utcnow() - datetime.datetime(1970,1,1)).total_seconds())
 RESTMAIL_URL = "http://restmail.net/mail/latencyTest@restmail.net"
+LATENCY_LIMIT = 8
 
 try:
     SL_SMTP_USERNAME = os.environ['SL_SMTP_USERNAME']
-    SL_SMTP_PASSWORD = os.environ['SL_SMTP_PASSWORD']
+    SL_SMTP_PROD_PW = os.environ['SL_SMTP_PROD_PW']
     smtp_enabled = True
 except:
     smtp_enabled = False
     print 'send email alert not enabled'
 
+epoch_time = int((datetime.datetime.utcnow() -
+                  datetime.datetime(1970,1,1)).total_seconds())
 SL_SMTP = "smtp.socketlabs.com"
 FROM_ADDR = "no-reply@persona.org"
 TO_ADDR = ["latencyTest@restmail.net"]
@@ -33,7 +34,7 @@ def send_email(msg_body, from_addr, to_addr, subject):
     s.ehlo()
     # s.set_debuglevel(1)
     # s.ehlo()
-    s.login(SL_SMTP_USERNAME, SL_SMTP_PASSWORD)
+    s.login(SL_SMTP_USERNAME, SL_SMTP_PROD_PW)
     s.sendmail(from_addr, to_addr, msg)
     s.quit()
 
@@ -49,12 +50,23 @@ def get_mail():
 def compare_date(sent_epoch, rec_date):
     rec_date = rec_date[:rec_date.index('.')]
     pattern = '%Y-%m-%dT%H:%M:%S'
-    rec_epoch = int((datetime.datetime.strptime(rec_date, pattern) - datetime.datetime(1970,1,1)).total_seconds())
+    rec_epoch = int((datetime.datetime.strptime(rec_date, pattern) - 
+                     datetime.datetime(1970,1,1)).total_seconds())
     print 'recieved: %s, send: %s' % (rec_epoch, sent_epoch)
     return rec_epoch - int(sent_epoch)
 
-
-send_email(epoch_time, FROM_ADDR, TO_ADDR, SUBJECT)
 mail_data =  get_mail()[-1]
-print 'last email latency: %s s' % compare_date(mail_data["subject"], mail_data["receivedAt"])
+latency = compare_date(mail_data["subject"], mail_data["receivedAt"])
+print 'fetching last email latency:\n%s s' % latency
+if latency > LATENCY_LIMIT:
+    print "Latency over limit sending alert"
+    msg =  "Send email latency is \n%ss" % latency
+    send_email(msg, 
+               FROM_ADDR,
+               ["ewong@mozilla.com"],
+               "Email latency alert")
+
+print 'sending latency mail'
+send_email(epoch_time, FROM_ADDR, TO_ADDR, SUBJECT)
+
 
