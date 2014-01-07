@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import sys
+import time
 import urllib2
 import smtplib
 
@@ -18,8 +19,8 @@ except:
     smtp_enabled = False
     print 'send email alert not enabled'
 
-epoch_time = int((datetime.datetime.utcnow() - \
-                  datetime.datetime(1970,1,1)).total_seconds())
+epoch_time = int(time.mktime(datetime.datetime.utcnow().timetuple()))
+
 SL_SMTP = "smtp.socketlabs.com"
 FROM_ADDR = "no-reply@persona.org"
 TO_ADDR = ["latencyTest@restmail.net"]
@@ -50,8 +51,7 @@ def get_mail():
 def compare_date(sent_epoch, rec_date):
     rec_date = rec_date[:rec_date.index('.')]
     pattern = '%Y-%m-%dT%H:%M:%S'
-    rec_epoch = int((datetime.datetime.strptime(rec_date, pattern) - 
-                     datetime.datetime(1970,1,1)).total_seconds())
+    rec_epoch = int((time.mktime(datetime.datetime.strptime(rec_date, pattern).timetuple())))
     print 'recieved: %s, send: %s' % (rec_epoch, sent_epoch)
     return rec_epoch - int(sent_epoch)
 
