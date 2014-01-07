@@ -5,6 +5,6 @@ Simple script that queries socketlabs reporting api for sent, failed, and pendin
 
 Usage:
 
-`python mq.py`
+`python email_queue_info.py`
 
 `python email_latency.py`
