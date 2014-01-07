@@ -10,6 +10,7 @@ SL_API_URL = "https://api.socketlabs.com/v1"
 SL_PORT = 25
 RESTMAIL_URL = "http://restmail.net/mail/latencyTest@restmail.net"
 LATENCY_LIMIT = 8
+ALERT_LIST = ["services-qa-staff@mozilla.com"]
 
 try:
     SL_SMTP_USERNAME = os.environ['SL_SMTP_USERNAME']
@@ -46,7 +47,7 @@ def get_mail():
         data = json.load(response)   
         return data
     except:
-        print 'no restmail'
+        print "can't load from restmail.net"
         sys.exit(0)
 
 def compare_date(sent_epoch, rec_date):
@@ -59,12 +60,13 @@ def compare_date(sent_epoch, rec_date):
 mail_data =  get_mail()[-1]
 latency = compare_date(mail_data["subject"], mail_data["receivedAt"])
 print 'fetching last email latency:\n%s s' % latency
+
 if latency > LATENCY_LIMIT:
     print "Latency over limit sending alert"
     msg =  "Send email latency is \n%ss" % latency
     send_email(msg, 
                FROM_ADDR,
-               ["ewong@mozilla.com"],
+               ALERT_LIST,
                "Email latency alert")
 
 print 'sending latency mail'

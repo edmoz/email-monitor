@@ -19,12 +19,12 @@ SL_PASSWORD = os.environ['SL_PASSWORD']
 SL_SERVERID = os.environ['SL_SERVERID']
 SAMPLE_TIME = 60
 PENDING_LIMIT = 20
-FAIL_PERCENT_LIMIT = 30
-ALERT_MIN = 10
+FAIL_PERCENT_LIMIT = 40
+ALERT_MIN = 20
 
 SL_SMTP = "smtp.socketlabs.com"
 FROM_ADDR = "no-reply@persona.org"
-TO_ADDR = ["ewong@mozilla.com"]
+TO_ADDR = ["services-qa-staff@mozilla.com"]
 SUBJECT = "[socketlabs-mq] Auto Alert"
 
 try:
@@ -60,8 +60,8 @@ def send_email(msg_body, from_addr, to_addr, subject):
 
     s = smtplib.SMTP(SL_SMTP, SL_PORT)
     s.ehlo()
-    s.set_debuglevel(1)
-    s.ehlo()
+    # s.set_debuglevel(1)
+    # s.ehlo()
     s.login(SL_SMTP_USERNAME, SL_SMTP_PASSWORD)
     s.sendmail(from_addr, to_addr, msg)
     s.quit()
@@ -79,7 +79,7 @@ msg_body +=  'Counts: queue=%s, sent=%s, fail=%s\n' % (queue_ct, sent_ct, fail_c
 
 totalOut = sent_ct + fail_ct
 pending = queue_ct - totalOut
-if sent_ct == 0:
+if not sent_ct:
     sent_ct = 1
 fail_percent = (float(fail_ct)/sent_ct) * 100
 msg_body += 'Pending: %s\n' %  pending
