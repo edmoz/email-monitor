@@ -62,6 +62,11 @@ def checkLatency():
     if mail_data:
         latency = compare_date(mail_data[-1]["subject"], mail_data[-1]["receivedAt"])
         print 'Fetching last email latency:\n%s s' % latency
+    else:
+        send_email('Restmail did not recieve email from %s' % SL_SMTP, 
+                   FROM_ADDR,
+                   ALERT_LIST,
+                   "Email latency alert")
 
     if latency > LATENCY_LIMIT:
         print "Latency over limit sending alert"
