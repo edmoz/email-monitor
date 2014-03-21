@@ -57,17 +57,27 @@ def compare_date(sent_epoch, rec_date):
     print 'recieved: %s, send: %s' % (rec_epoch, sent_epoch)
     return rec_epoch - int(sent_epoch)
 
-mail_data =  get_mail()[-1]
-latency = compare_date(mail_data["subject"], mail_data["receivedAt"])
-print 'fetching last email latency:\n%s s' % latency
+def checkLatency():
+    mail_data =  get_mail()
+    if mail_data:
+        latency = compare_date(mail_data[-1]["subject"], mail_data[-1]["receivedAt"])
+        print 'Fetching last email latency:\n%s s' % latency
+    else:
+        send_email('Restmail did not recieve email from %s' % SL_SMTP, 
+                   FROM_ADDR,
+                   ALERT_LIST,
+                   "Email latency alert")
 
-if latency > LATENCY_LIMIT:
-    print "Latency over limit sending alert"
-    msg =  "Send email latency is \n%ss" % latency
-    send_email(msg, 
-               FROM_ADDR,
-               ALERT_LIST,
-               "Email latency alert")
+    if latency > LATENCY_LIMIT:
+        print "Latency over limit sending alert"
+        msg =  "Send email latency is \n%ss" % latency
+        send_email(msg, 
+                   FROM_ADDR,
+                   ALERT_LIST,
+                   "Email latency alert")
+        return
+
+checkLatency()
 
 print 'sending latency mail'
 send_email(epoch_time, FROM_ADDR, TO_ADDR, SUBJECT)
