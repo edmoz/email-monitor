@@ -11,6 +11,7 @@ SL_PORT = 25
 RESTMAIL_URL = "http://restmail.net/mail/latencyTest@restmail.net"
 LATENCY_LIMIT = 8
 ALERT_LIST = ["services-qa-staff@mozilla.com"]
+latency = 0
 
 try:
     SL_SMTP_USERNAME = os.environ['SL_SMTP_USERNAME']
