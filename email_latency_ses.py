@@ -11,7 +11,7 @@ RESTMAIL_ACCT = "latencyTest-ses@restmail.net"
 LATENCY_LIMIT = 18
 SMTP_URL = "email-smtp.us-east-1.amazonaws.com"
 RESTMAIL_URL = "http://restmail.net/mail/%s" % RESTMAIL_ACCT
-ALERT_LIST = ["ewong@mozilla.com"]
+ALERT_LIST = ["services-alerts@mozilla.org"]
 FROM_ADDR = "no-reply@lcip.org"
 TO_ADDR = [RESTMAIL_ACCT]
 latency = 0
@@ -63,21 +63,23 @@ def checkLatency():
         latency = compare_date(mail_data[-1]["subject"], mail_data[-1]["receivedAt"])
         print 'Fetching last email latency:\n%s s' % latency
     else:
-        send_email('Restmail did not recieve email from %s' % SL_SMTP, 
+        msg  = 'Restmail did not recieve email from %s' % SMTP_URL
+        send_email(msg, 
                    FROM_ADDR,
                    ALERT_LIST,
                    "Email latency alert")
+        print msg
 
     if latency > LATENCY_LIMIT:
-        print "Latency over limit sending alert"
         msg =  "Send email latency is \n%ss" % latency
         send_email(msg, 
                    FROM_ADDR,
                    ALERT_LIST,
                    "Email latency alert")
+        print msg
+
 
 checkLatency()
-print 'sending latency mail'
 send_email(epoch_time, FROM_ADDR, TO_ADDR, SUBJECT)
 
 

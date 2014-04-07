@@ -10,7 +10,7 @@ SL_API_URL = "https://api.socketlabs.com/v1"
 SL_PORT = 25
 RESTMAIL_URL = "http://restmail.net/mail/latencyTest@restmail.net"
 LATENCY_LIMIT = 8
-ALERT_LIST = ["services-qa-staff@mozilla.com"]
+ALERT_LIST = ["services-alerts@mozilla.org"]
 latency = 0
 
 try:
@@ -80,7 +80,6 @@ def checkLatency():
 
 checkLatency()
 
-print 'sending latency mail'
 send_email(epoch_time, FROM_ADDR, TO_ADDR, SUBJECT)
 
 

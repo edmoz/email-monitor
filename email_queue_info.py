@@ -24,7 +24,7 @@ ALERT_MIN = 20
 
 SL_SMTP = "smtp.socketlabs.com"
 FROM_ADDR = "no-reply@persona.org"
-TO_ADDR = ["services-qa-staff@mozilla.com"]
+TO_ADDR = ["services-alerts@mozilla.org"]
 SUBJECT = "[socketlabs-mq] Auto Alert"
 
 try:
